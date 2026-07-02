@@ -4,121 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>De-escalation: Myth or Reality?</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Compact layout styles to prevent scrolling in embeds */
-        html, body {
+        /* Custom Font and Layout Reset */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow-x: hidden;
-            margin: 0;
-            padding: 0;
             background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        /* Hide scrollbar for all browsers */
+        /* Hide scrollbars elegantly */
         body::-webkit-scrollbar { display: none; }
         body { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Draggable card styling and interactions */
         .draggable-card {
             cursor: grab;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, opacity 0.2s ease;
             touch-action: none;
             user-select: none;
+            will-change: transform;
         }
         .draggable-card:active { cursor: grabbing; }
         
+        /* Drop zones dashed border and active transitions */
         .drop-zone {
-            border: 2px dashed #cbd5e1;
-            background: #f8fafc;
-            min-height: 220px;
+            border: 2px dashed #e2e8f0;
+            background: #ffffff;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .drop-zone.drag-over {
-            border-color: #3b82f6;
-            background: #eff6ff;
-            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
-        }
-        .modal-overlay {
-            background-color: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(6px);
-        }
-        .font-main { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         
+        /* Dragover Highlights tailored for each category */
+        .drop-zone.drag-over-myth {
+            border-color: #f87171;
+            background: #fef2f2;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1), inset 0 0 12px rgba(239, 68, 68, 0.05);
+            transform: scale(1.02);
+        }
+        .drop-zone.drag-over-reality {
+            border-color: #4ade80;
+            background: #f0fdf4;
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.1), inset 0 0 12px rgba(34, 197, 94, 0.05);
+            transform: scale(1.02);
+        }
+
+        /* Modal blur overlay */
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Dynamic scale animation for cards entering */
+        @keyframes cardEnter {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-card-enter {
+            animation: cardEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Smooth Shake effect on errors */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            20%, 60% { transform: translateX(-12px); }
+            40%, 80% { transform: translateX(12px); }
         }
-        .shake { animation: shake 0.4s ease-in-out; }
-
-        .touch-dragging {
-            opacity: 0.9;
-            pointer-events: none;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
-        .select-none { user-select: none; }
+        .shake { animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
     </style>
 </head>
-<body class="font-main p-2 md:p-4">
+<body class="flex items-center justify-center min-h-screen p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="bg-[#1e293b] text-white p-4 rounded-t-2xl text-center shadow-xl border-b border-slate-700">
-            <h1 class="text-lg md:text-xl font-bold mb-1">De-escalation: Myth or Reality?</h1>
-            <p class="text-slate-400 italic text-sm">Drag each statement to where it belongs.</p>
+    <div class="w-full max-w-4xl bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden">
+        <!-- Main Header -->
+        <div class="bg-[#1c283b] text-white py-7 px-6 text-center select-none shadow-md">
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">De-escalation: Myth or Reality?</h1>
+            <p class="text-slate-400 italic text-sm mt-1.5 font-normal tracking-wide">Drag each statement to where it belongs.</p>
         </div>
 
-        <!-- Main Board -->
-        <div class="bg-white border-x border-b border-slate-200 rounded-b-2xl p-4 shadow-md">
+        <!-- Main Card Sandbox Area -->
+        <div class="p-6 md:p-10">
             
-            <!-- Active Card Area -->
-            <div id="source-container" class="flex flex-col items-center mb-6">
-                <div id="active-card-slot" class="w-full max-w-md h-40 flex items-center justify-center border-2 border-slate-100 rounded-2xl bg-slate-50/50 relative p-4">
-                    <!-- Cards injected here -->
+            <!-- Draggable Slot Container -->
+            <div id="source-container" class="flex flex-col items-center mb-8">
+                <!-- Large Outer Frame -->
+                <div id="active-card-slot" class="w-full max-w-xl h-44 flex items-center justify-center border border-slate-100/80 rounded-[32px] bg-slate-50/50 p-5 relative transition-all">
+                    <!-- Target Card Dynamic Injection -->
                 </div>
-                <div id="deck-counter" class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Tiles Remaining: <span id="cards-left">6</span>
+                <!-- Remaining Counter -->
+                <div id="deck-counter" class="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] select-none">
+                    TILES REMAINING: <span id="cards-left">6</span>
+                </div>
+            </div>
+
+            <!-- Target Drop Zones -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Zone: Myth -->
+                <div id="zone-myth" 
+                     class="drop-zone p-6 md:p-8 rounded-[24px] flex flex-col items-center text-center select-none" 
+                     ondrop="handleDrop(event, 'myth')" 
+                     ondragover="allowDrop(event, 'myth')" 
+                     ondragleave="handleDragLeave(event, 'myth')">
+                    
+                    <div class="w-11 h-11 bg-red-100/75 text-red-600 rounded-full flex items-center justify-center mb-3.5 shadow-sm">
+                        <!-- Elegant Red Cross SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div class="text-slate-800 font-extrabold text-lg md:text-xl tracking-tight mb-2">Myth</div>
+                    <div id="count-myth" class="px-4 py-1.5 bg-slate-100 text-slate-500 rounded-full text-[10px] font-extrabold tracking-widest uppercase border border-slate-200/50">
+                        0 ITEMS
+                    </div>
+                </div>
+
+                <!-- Zone: Reality -->
+                <div id="zone-reality" 
+                     class="drop-zone p-6 md:p-8 rounded-[24px] flex flex-col items-center text-center select-none" 
+                     ondrop="handleDrop(event, 'reality')" 
+                     ondragover="allowDrop(event, 'reality')" 
+                     ondragleave="handleDragLeave(event, 'reality')">
+                    
+                    <div class="w-11 h-11 bg-green-100/75 text-green-600 rounded-full flex items-center justify-center mb-3.5 shadow-sm">
+                        <!-- Elegant Green Check SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div class="text-slate-800 font-extrabold text-lg md:text-xl tracking-tight mb-2">Reality</div>
+                    <div id="count-reality" class="px-4 py-1.5 bg-slate-100 text-slate-500 rounded-full text-[10px] font-extrabold tracking-widest uppercase border border-slate-200/50">
+                        0 ITEMS
+                    </div>
                 </div>
             </div>
 
-            <!-- Target Zones -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div id="zone-myth" class="drop-zone p-4 rounded-2xl flex flex-col items-center text-center transition-all group" ondrop="handleDrop(event, 'myth')" ondragover="allowDrop(event)" ondragleave="handleDragLeave(event)">
-                    <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </div>
-                    <div class="text-slate-800 font-bold text-lg mb-1">Myth</div>
-                    <div id="count-myth" class="px-3 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold uppercase">0 Items</div>
+            <!-- Complete State View -->
+            <div id="completion-ui" class="hidden mt-8 text-center p-8 bg-slate-50/50 border border-slate-100 rounded-3xl animate-card-enter">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
                 </div>
-
-                <div id="zone-reality" class="drop-zone p-4 rounded-2xl flex flex-col items-center text-center transition-all group" ondrop="handleDrop(event, 'reality')" ondragover="allowDrop(event)" ondragleave="handleDragLeave(event)">
-                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                    </div>
-                    <div class="text-slate-800 font-bold text-lg mb-1">Reality</div>
-                    <div id="count-reality" class="px-3 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold uppercase">0 Items</div>
-                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Activity Complete</h2>
+                <p class="text-slate-500 text-sm max-w-md mx-auto leading-relaxed mb-6">
+                    Understanding what de-escalation truly is helps you apply it effectively in high-pressure situations.
+                </p>
+                <button onclick="restartExercise()" class="px-8 py-3.5 bg-[#1c283b] text-white font-bold rounded-2xl hover:bg-slate-800 active:scale-95 transition-all shadow-md tracking-wide">
+                    Restart Exercise
+                </button>
             </div>
-        </div>
-
-        <!-- Completion UI -->
-        <div id="completion-ui" class="hidden mt-4 text-center p-6 bg-white border border-slate-200 rounded-2xl shadow-xl">
-            <h2 class="text-2xl font-black text-slate-800 mb-1">Activity Complete</h2>
-            <p class="text-slate-600 text-sm max-w-md mx-auto mb-4">Understanding what de-escalation truly is helps you apply it effectively in high-pressure situations.</p>
-            <button onclick="location.reload()" class="px-6 py-2 bg-[#1e293b] text-white font-bold rounded-xl hover:bg-slate-700 transition shadow-lg">
-                Restart Exercise
-            </button>
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Educational Feedback Modal -->
     <div id="feedback-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all select-none">
+        <div class="bg-white rounded-[32px] max-w-lg w-full shadow-2xl overflow-hidden transform scale-95 transition-all duration-300">
             <div class="p-8 md:p-10">
-                <h3 id="modal-heading" class="text-xl font-black mb-6"></h3>
-                <div id="modal-quote-box" class="bg-white border-l-4 p-5 rounded-r-xl">
-                    <p id="modal-italic-text" class="text-slate-600 italic text-base leading-relaxed font-medium"></p>
+                <!-- Modal Heading -->
+                <h3 id="modal-heading" class="text-2xl font-black tracking-tight mb-5"></h3>
+                
+                <!-- Dynamic Content Container -->
+                <div id="modal-quote-box" class="bg-slate-50 border-l-4 p-5 rounded-r-2xl flex flex-col gap-2">
+                    <div id="modal-action-text" class="font-extrabold text-slate-800 text-base md:text-lg leading-snug"></div>
+                    <p id="modal-italic-text" class="text-slate-600 italic text-sm md:text-base leading-relaxed font-medium"></p>
                 </div>
-                <button onclick="closeModal()" class="mt-8 w-full py-3 bg-[#1e293b] text-white font-bold rounded-2xl hover:bg-slate-800 transition shadow-lg">
+                
+                <button onclick="closeModal()" class="mt-8 w-full py-4 bg-[#1c283b] text-white font-extrabold rounded-2xl hover:bg-slate-800 active:translate-y-0.5 transition-all shadow-lg tracking-wide">
                     Next Action
                 </button>
             </div>
@@ -128,19 +184,53 @@
     <script>
         const scenarios = [
             // Myths
-            { id: 1, target: 'myth', text: "A manipulative trick to make someone calm down", feedback: "De-escalation is not about tricks. It is about creating the conditions where calm becomes possible. That is a very different thing." },
-            { id: 2, target: 'myth', text: "Staying quiet and letting the patient talk themselves out", feedback: "Silence without engagement is avoidance. A patient who feels unheard will not calm down. They will escalate until someone actually listens." },
-            { id: 4, target: 'myth', text: "Agreeing with the patient even when they are wrong", feedback: "You do not have to agree with someone to make them feel heard. Acknowledging how someone feels and endorsing what they say are two very different things." },
+            { 
+                id: 1, 
+                target: 'myth', 
+                text: "A manipulative trick to make someone calm down", 
+                feedback: "De-escalation is not about tricks. It is about creating the conditions where calm becomes possible. That is a very different thing." 
+            },
+            { 
+                id: 2, 
+                target: 'myth', 
+                text: "Staying quiet and letting the patient talk themselves out", 
+                feedback: "Silence without engagement is avoidance. A patient who feels unheard will not calm down. They will escalate until someone actually listens." 
+            },
+            { 
+                id: 3, 
+                target: 'myth', 
+                text: "Agreeing with the patient even when they are wrong", 
+                feedback: "You do not have to agree with someone to make them feel heard. Acknowledging how someone feels and endorsing what they say are two very different things." 
+            },
             
             // Realities
-            { id: 3, target: 'reality', text: "Using active listening and setting respectful boundaries", feedback: "Listening tells the patient they are safe. Boundaries tell them where the conversation can and cannot go. Neither is passive. Both are essential." },
-            { id: 5, target: 'reality', text: "Steadying a volatile situation by managing your own calm first", feedback: "This is the thermostat in action. Your calm is not just good practice. It is the foundation everything else is built on." },
-            { id: 6, target: 'reality', text: "Showing a genuine interest in the patient's concern", feedback: "Genuine interest cannot be faked and patients know the difference. When someone feels you actually care, the threat response begins to ease. That is where the conversation can begin." }
+            { 
+                id: 4, 
+                target: 'reality', 
+                text: "Using active listening and setting respectful boundaries", 
+                feedback: "Listening tells the patient they are safe. Boundaries tell them where the conversation can and cannot go. Neither is passive. Both are essential." 
+            },
+            { 
+                id: 5, 
+                target: 'reality', 
+                text: "Steadying a volatile situation by managing your own calm first", 
+                feedback: "This is the thermostat in action. Your calm is not just good practice. It is the foundation everything else is built on." 
+            },
+            { 
+                id: 6, 
+                target: 'reality', 
+                text: "Showing a genuine interest in the patient's concern", 
+                feedback: "Genuine interest cannot be faked and patients know the difference. When someone feels you actually care, the threat response begins to ease. That is where the conversation can begin." 
+            }
         ];
 
-        let currentDeck = [...scenarios].sort(() => Math.random() - 0.5);
+        let currentDeck = [];
         let counts = { myth: 0, reality: 0 };
         let activeCard = null;
+
+        function shuffleDeck() {
+            currentDeck = [...scenarios].sort(() => Math.random() - 0.5);
+        }
 
         function renderNextCard() {
             const container = document.getElementById('active-card-slot');
@@ -149,126 +239,218 @@
             counterLabel.innerText = currentDeck.length;
             
             if (currentDeck.length === 0) {
-                container.innerHTML = '<div class="text-slate-400 font-medium">Activity Complete</div>';
+                container.innerHTML = '<div class="text-slate-400 font-bold text-lg select-none">Exercise Complete</div>';
                 document.getElementById('deck-counter').classList.add('hidden');
                 document.getElementById('completion-ui').classList.remove('hidden');
                 return;
             }
 
             activeCard = currentDeck[0];
+            
             const cardEl = document.createElement('div');
-            cardEl.className = 'draggable-card w-full h-full bg-white shadow-xl border border-slate-200 rounded-2xl p-4 flex items-center justify-center text-center font-bold text-slate-800 text-base md:text-lg transition-all duration-300';
+            cardEl.className = 'draggable-card w-full max-w-md h-28 bg-white shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.05)] border border-slate-100 rounded-2xl p-6 flex items-center justify-center text-center font-bold text-slate-800 text-base md:text-lg animate-card-enter';
             cardEl.draggable = true;
             cardEl.innerText = activeCard.text;
             cardEl.id = "card-" + activeCard.id;
             
             cardEl.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', activeCard.id);
-                cardEl.classList.add('opacity-40');
+                setTimeout(() => {
+                    cardEl.classList.add('opacity-10');
+                }, 0);
             });
             
-            cardEl.addEventListener('dragend', (e) => {
-                cardEl.classList.remove('opacity-40');
+            cardEl.addEventListener('dragend', () => {
+                cardEl.classList.remove('opacity-10');
             });
 
-            cardEl.addEventListener('touchstart', handleTouchStart, {passive: false});
-            cardEl.addEventListener('touchmove', handleTouchMove, {passive: false});
-            cardEl.addEventListener('touchend', handleTouchEnd, {passive: false});
+            cardEl.addEventListener('touchstart', handleTouchStart, { passive: false });
+            cardEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+            cardEl.addEventListener('touchend', handleTouchEnd, { passive: false });
 
             container.appendChild(cardEl);
         }
 
-        function allowDrop(ev) {
+        function allowDrop(ev, zoneType) {
             ev.preventDefault();
-            ev.currentTarget.classList.add('drag-over');
+            const targetZone = document.getElementById(`zone-${zoneType}`);
+            targetZone.classList.add(`drag-over-${zoneType}`);
         }
 
-        function handleDragLeave(ev) {
-            ev.currentTarget.classList.remove('drag-over');
+        function handleDragLeave(ev, zoneType) {
+            const targetZone = document.getElementById(`zone-${zoneType}`);
+            targetZone.classList.remove(`drag-over-${zoneType}`);
         }
 
         function handleDrop(ev, zoneType) {
             ev.preventDefault();
-            ev.currentTarget.classList.remove('drag-over');
+            const targetZone = document.getElementById(`zone-${zoneType}`);
+            targetZone.classList.remove(`drag-over-${zoneType}`);
             processChoice(zoneType);
         }
 
         function processChoice(zoneType) {
+            const slot = document.getElementById('active-card-slot');
+            
             if (zoneType === activeCard.target) {
                 counts[zoneType]++;
-                document.getElementById(`count-${zoneType}`).innerText = `${counts[zoneType]} Item${counts[zoneType] > 1 ? 's' : ''}`;
+                const countBadge = document.getElementById(`count-${zoneType}`);
+                countBadge.innerText = `${counts[zoneType]} ${counts[zoneType] === 1 ? 'ITEM' : 'ITEMS'}`;
+                
                 showFeedback(activeCard, zoneType);
                 currentDeck.shift();
-                renderNextCard();
             } else {
-                const slot = document.getElementById('active-card-slot');
                 slot.classList.add('shake');
-                setTimeout(() => slot.classList.remove('shake'), 400);
+                const card = slot.querySelector('.draggable-card');
+                if (card) {
+                    card.classList.add('border-red-300', 'text-red-600');
+                    setTimeout(() => {
+                        card.classList.remove('border-red-300', 'text-red-600');
+                    }, 400);
+                }
+                setTimeout(() => {
+                    slot.classList.remove('shake');
+                }, 400);
             }
         }
 
         function showFeedback(card, zoneType) {
             const heading = document.getElementById('modal-heading');
             const quoteBox = document.getElementById('modal-quote-box');
+            const modalBox = document.querySelector('#feedback-modal > div');
+            
+            // Present action text alongside its drop feedback
+            document.getElementById('modal-action-text').innerText = card.text;
             document.getElementById('modal-italic-text').innerText = `"${card.feedback}"`;
             
             if (zoneType === 'reality') {
                 heading.innerText = "Reality";
-                heading.className = "text-xl font-black mb-6 text-green-600";
-                quoteBox.className = "bg-white border-l-4 border-green-500 p-5 rounded-r-xl";
+                heading.className = "text-2xl font-black mb-5 text-green-600";
+                quoteBox.className = "bg-green-50/50 border-l-4 border-green-500 p-5 rounded-r-2xl flex flex-col gap-2";
             } else {
                 heading.innerText = "Myth";
-                heading.className = "text-xl font-black mb-6 text-red-600";
-                quoteBox.className = "bg-white border-l-4 border-red-500 p-5 rounded-r-xl";
+                heading.className = "text-2xl font-black mb-5 text-red-500";
+                quoteBox.className = "bg-red-50/50 border-l-4 border-red-400 p-5 rounded-r-2xl flex flex-col gap-2";
             }
-            document.getElementById('feedback-modal').classList.remove('hidden');
+            
+            const overlay = document.getElementById('feedback-modal');
+            overlay.classList.remove('hidden');
+            
+            setTimeout(() => {
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }, 10);
         }
 
         function closeModal() {
-            document.getElementById('feedback-modal').classList.add('hidden');
+            const overlay = document.getElementById('feedback-modal');
+            const modalBox = document.querySelector('#feedback-modal > div');
+            
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                renderNextCard();
+            }, 150);
         }
 
-        let touchStartX, touchStartY;
+        // Touch Interaction Utilities
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let deltaX = 0;
+        let deltaY = 0;
+        let activeTouchCard = null;
+
         function handleTouchStart(e) {
+            if (currentDeck.length === 0) return;
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
-            e.currentTarget.classList.add('touch-dragging');
-        }
-        function handleTouchMove(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const card = e.currentTarget;
-            card.style.position = 'fixed';
-            card.style.width = '80vw';
-            card.style.maxWidth = '300px';
-            card.style.left = (touch.clientX - (parseInt(card.style.width)/2 || 150)) + 'px';
-            card.style.top = (touch.clientY - 40) + 'px';
-            card.style.zIndex = 1000;
-        }
-        function handleTouchEnd(e) {
-            const card = e.currentTarget;
-            const touch = e.changedTouches[0];
-            const zones = ['myth', 'reality'];
-            let dropped = false;
+            activeTouchCard = e.currentTarget;
             
-            card.classList.remove('touch-dragging');
-            card.style.position = 'static';
-            card.style.zIndex = 1;
-            card.style.width = '100%';
-            
-            for(let z of zones) {
-                const rect = document.getElementById(`zone-${z}`).getBoundingClientRect();
-                if (touch.clientX > rect.left && touch.clientX < rect.right && touch.clientY > rect.top && touch.clientY < rect.bottom) {
-                    processChoice(z);
-                    dropped = true;
-                    break;
-                }
-            }
-            if (!dropped) renderNextCard(); 
+            activeTouchCard.style.transition = 'none';
+            activeTouchCard.classList.add('z-50', 'shadow-2xl', 'scale-105');
         }
 
-        window.onload = renderNextCard;
+        function handleTouchMove(e) {
+            if (!activeTouchCard) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            deltaX = touch.clientX - touchStartX;
+            deltaY = touch.clientY - touchStartY;
+            
+            activeTouchCard.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+            
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+            
+            const zoneMyth = document.getElementById('zone-myth');
+            const zoneReality = document.getElementById('zone-reality');
+            
+            const rectMyth = zoneMyth.getBoundingClientRect();
+            const rectReality = zoneReality.getBoundingClientRect();
+            
+            zoneMyth.classList.remove('drag-over-myth');
+            zoneReality.classList.remove('drag-over-reality');
+            
+            if (touchX > rectMyth.left && touchX < rectMyth.right && touchY > rectMyth.top && touchY < rectMyth.bottom) {
+                zoneMyth.classList.add('drag-over-myth');
+            } else if (touchX > rectReality.left && touchX < rectReality.right && touchY > rectReality.top && touchY < rectReality.bottom) {
+                zoneReality.classList.add('drag-over-reality');
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (!activeTouchCard) return;
+            
+            const touch = e.changedTouches[0];
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+            
+            const zoneMyth = document.getElementById('zone-myth');
+            const zoneReality = document.getElementById('zone-reality');
+            
+            const rectMyth = zoneMyth.getBoundingClientRect();
+            const rectReality = zoneReality.getBoundingClientRect();
+            
+            zoneMyth.classList.remove('drag-over-myth');
+            zoneReality.classList.remove('drag-over-reality');
+            
+            let chosenZone = null;
+            if (touchX > rectMyth.left && touchX < rectMyth.right && touchY > rectMyth.top && touchY < rectMyth.bottom) {
+                chosenZone = 'myth';
+            } else if (touchX > rectReality.left && touchX < rectReality.right && touchY > rectReality.top && touchY < rectReality.bottom) {
+                chosenZone = 'reality';
+            }
+            
+            activeTouchCard.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            
+            if (chosenZone) {
+                processChoice(chosenZone);
+            } else {
+                activeTouchCard.style.transform = 'translate3d(0, 0, 0)';
+                activeTouchCard.classList.remove('z-50', 'shadow-2xl', 'scale-105');
+            }
+            
+            activeTouchCard = null;
+        }
+
+        function restartExercise() {
+            counts = { myth: 0, reality: 0 };
+            document.getElementById('count-myth').innerText = '0 ITEMS';
+            document.getElementById('count-reality').innerText = '0 ITEMS';
+            document.getElementById('completion-ui').classList.add('hidden');
+            document.getElementById('deck-counter').classList.remove('hidden');
+            shuffleDeck();
+            renderNextCard();
+        }
+
+        window.onload = function() {
+            shuffleDeck();
+            renderNextCard();
+        };
     </script>
 </body>
 </html>
